@@ -104,8 +104,19 @@ export class CustomFlexgridFilterComponent extends wjGridFilter.WjFlexGridFilter
 			}
 		};
 
+		self.activeEditor.hostElement.addEventListener('mousedown', self._clearClick.bind(self));
+
 		// console.dir(self.activeEditor);
 		console.dir(self);
+	}
+
+	_clearClick(e: MouseEvent) {
+		if(e.target == this.activeEditor["_btnClear"]) {
+			var _custFilter = this.getColumnFilter(this._edtCustCol);
+			if(_custFilter && _custFilter["customFilter"]) {
+				_custFilter["customFilter"].clear();
+			} 
+		}
 	}
 
 	apply() {
@@ -117,20 +128,11 @@ export class CustomFlexgridFilterComponent extends wjGridFilter.WjFlexGridFilter
 			_custFilter.clear();
 			this.grid.collectionView.refresh();
 			_custFilter["customFilter"].applyCustomFilter();
+			
 			this.onFilterApplied(new wjcCore.EventArgs());
 		} else {
 			super.apply();
 		}
-	}
-
-	clear() {
-		console.dir('asdf');
-		// console.log(this.getColumnFilter(this["_edtCustCol"]));
-		// var _custFilter = this.getColumnFilter(this["_edtCustCol"]);
-		// if (_custFilter && _custFilter["customFilter"]) {
-		// 	_custFilter["customFilter"].clear();
-		// }
-		super.clear();
 	}
 
 	_hideCustomFilter() {
@@ -172,19 +174,24 @@ export class CustomFilter extends wjcGridFilter.ConditionFilter {
 	// since this class extend ConditionFilter
 	// you can use all the properties like condition1, condition2 etc
 	applyCustomFilter() {
-		this.column.grid.collectionView.filter = function(item, prop) {
-			return item.country == "UK";
-		};
+		let isUK : wjcCore.IPredicate;
+		isUK = function(item: any) {
+			return item.country == 'UK';
+		}
+		this.column.grid.collectionView.filter = isUK;
 	}
 
 	clear() {
 		super.clear();
-		this.column.collectionView.filter = function(item, prop) {
+		let clear : wjcCore.IPredicate;
+		clear = function(item: any) {
 			return true;
-		};
-		this.column.collectionView.refresh();
+		}
+		this.column.collectionView.filter = clear;
+		// this.column.collectionView.refresh();
 	}
 }
+
 
 export class CustomFilterEditor extends wjcGridFilter.ConditionFilterEditor {
 	// you can update the control template here

@@ -4,7 +4,6 @@ import * as wjcCore from "@grapecity/wijmo";
 import * as wjcGrid from "@grapecity/wijmo.grid";
 import * as wjcGridFilter from "@grapecity/wijmo.grid.filter";
 import * as wjGridFilter from "@grapecity/wijmo.angular2.grid.filter";
-import { elementEventFullName } from "@angular/compiler/src/view_compiler/view_compiler";
 
 @Component({
 	selector: "wj-custom-flex-grid-filter",
@@ -19,6 +18,16 @@ export class CustomFlexgridFilterComponent extends wjGridFilter.WjFlexGridFilter
 		var self = this;
 
 		wjcGridFilter.ColumnFilterEditor.controlTemplate = `<div><div wj-part="div-sort"><button wj-part="btn-asc" class="wj-btn" style="min-width:95px"></button>&nbsp;&nbsp;&nbsp;<button wj-part="btn-dsc" class="wj-btn" style="min-width:95px"></button></div><div wj-part="div-type" class="wj-filtertype"><a wj-part="a-custom" href="" draggable="false"></a>&nbsp;|&nbsp;<a wj-part="a-cnd" href="" draggable="false"></a>&nbsp;|&nbsp;<a wj-part="a-val" href="" draggable="false"></a></div><div wj-part="div-edt-custom" tabindex="-1"></div><div wj-part="div-edt-val" tabindex="-1"></div><div wj-part="div-edt-cnd" tabindex="-1"></div><div style="text-align:right;margin-top:10px"><button wj-part="btn-apply" class="wj-btn"></button>&nbsp;&nbsp;<button wj-part="btn-cancel" class="wj-btn"></button>&nbsp;&nbsp;<button wj-part="btn-clear" class="wj-btn"></button></div>`;
+
+		self.grid.formatItem.addHandler((s, e: wjcGrid.FormatItemEventArgs) => {
+			if(e.panel == s.columnHeaders) {
+				var _custFilter = self.getColumnFilter(s.columns[e.col]);
+				if(_custFilter && _custFilter["customFilter"] && _custFilter["customFilter"].isActive) {
+					wjcCore.toggleClass(e.cell, 'wj-filter-off', false);
+					wjcCore.toggleClass(e.cell, 'wj-filter-on');
+				}
+			}
+		})
 	}
 
 	editColumnFilter(
@@ -105,9 +114,6 @@ export class CustomFlexgridFilterComponent extends wjGridFilter.WjFlexGridFilter
 		};
 
 		self.activeEditor.hostElement.addEventListener('mousedown', self._clearClick.bind(self));
-
-		// console.dir(self.activeEditor);
-		console.dir(self);
 	}
 
 	_clearClick(e: MouseEvent) {
@@ -128,8 +134,6 @@ export class CustomFlexgridFilterComponent extends wjGridFilter.WjFlexGridFilter
 			_custFilter.clear();
 			this.grid.collectionView.refresh();
 			_custFilter["customFilter"].applyCustomFilter();
-			
-			this.onFilterApplied(new wjcCore.EventArgs());
 		} else {
 			super.apply();
 		}
@@ -170,15 +174,14 @@ export class CustomFlexgridFilterComponent extends wjGridFilter.WjFlexGridFilter
 }
 
 export class CustomFilter extends wjcGridFilter.ConditionFilter {
-	// you can add your own filters in this method
-	// since this class extend ConditionFilter
-	// you can use all the properties like condition1, condition2 etc
+
 	applyCustomFilter() {
-		let isUK : wjcCore.IPredicate;
-		isUK = function(item: any) {
-			return item.country == 'UK';
+		var self = this;
+		this.column.grid.collectionView.filter = function(item) {
+			 // apply according to conditions
+			 // in this scenario all conditions are flipped
+			return !self.apply(item);
 		}
-		this.column.grid.collectionView.filter = isUK;
 	}
 
 	clear() {
@@ -188,7 +191,6 @@ export class CustomFilter extends wjcGridFilter.ConditionFilter {
 			return true;
 		}
 		this.column.collectionView.filter = clear;
-		// this.column.collectionView.refresh();
 	}
 }
 
